@@ -1,0 +1,15 @@
+{
+  "name": "captioncafe-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile": "node compile.mjs",
+    "test": "node test-contract.mjs",
+    "check": "node check-frontend.mjs"
+  },
+  "devDependencies": {
+    "ethers": "^6.13.0",
+    "ganache": "^7.9.2",
+    "solc": "0.8.20"
+  }
+}

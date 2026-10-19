@@ -1,0 +1,23 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/CaptionCafe.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\n/// @title Caption Café\n/// @notice Serve a social caption on BOT Chain, and sip (upvote) the ones you like.\n/// A served caption is a timestamped public record of who posted the line first.\n/// No tokens, no payments, no admin, no personal data.\ncontract CaptionCafe {\n    enum Platform { Instagram, TikTok, X }\n\n    struct Caption {\n        address chef;\n        string business;\n        string text;\n        string hashtags;\n        Platform platform;\n        uint8 tone;\n        uint32 sips;\n        uint64 servedAt;\n    }\n\n    /// @notice Max bytes for business + text + hashtags together.\n    uint256 public constant MAX_TOTAL = 320;\n    /// @notice Max bytes for the business name on its own.\n    uint256 public constant MAX_BUSINESS = 40;\n    /// @notice Tones are 0..TONES-1: Playful, Cosy, Bold, Luxe, Funny.\n    uint8 public constant TONES = 5;\n\n    Caption[] public captions;\n    mapping(uint256 => mapping(address => bool)) public sipped;\n    mapping(address => uint256[]) private byChef;\n\n    event Served(uint256 indexed id, address indexed chef, Platform platform);\n    event Sipped(uint256 indexed id, address indexed by, uint32 sips);\n\n    error EmptyText();\n    error TooLong();\n    error BadTone();\n    error NotFound();\n    error AlreadySipped();\n\n    function serve(\n        string calldata business,\n        string calldata text,\n        string calldata hashtags,\n        Platform platform,\n        uint8 tone\n    ) external returns (uint256 id) {\n        uint256 textLen = bytes(text).length;\n        uint256 businessLen = bytes(business).length;\n        if (textLen == 0) revert EmptyText();\n        if (businessLen > MAX_BUSINESS || businessLen + textLen + bytes(hashtags).length > MAX_TOTAL) revert TooLong();\n        if (tone >= TONES) revert BadTone();\n\n        id = captions.length;\n        captions.push(Caption({\n            chef: msg.sender,\n            business: business,\n            text: text,\n            hashtags: hashtags,\n            platform: platform,\n            tone: tone,\n            sips: 0,\n            servedAt: uint64(block.timestamp)\n        }));\n        byChef[msg.sender].push(id);\n        emit Served(id, msg.sender, platform);\n    }\n\n    /// @notice One sip per wallet per caption. Sipping your own caption is allowed.\n    function sip(uint256 id) external {\n        if (id >= captions.length) revert NotFound();\n        if (sipped[id][msg.sender]) revert AlreadySipped();\n        sipped[id][msg.sender] = true;\n        uint32 sips = ++captions[id].sips;\n        emit Sipped(id, msg.sender, sips);\n    }\n\n    function total() external view returns (uint256) {\n        return captions.length;\n    }\n\n    function getCaption(uint256 id) external view returns (Caption memory) {\n        if (id >= captions.length) revert NotFound();\n        return captions[id];\n    }\n\n    /// @notice Captions [from, from + count), clamped to the end. The frontend sorts by sips.\n    function getCaptions(uint256 from, uint256 count) external view returns (Caption[] memory page) {\n        uint256 len = captions.length;\n        if (from >= len) return new Caption[](0);\n        uint256 end = from + count > len ? len : from + count;\n        page = new Caption[](end - from);\n        for (uint256 i = from; i < end; i++) page[i - from] = captions[i];\n    }\n\n    /// @notice Whether `who` has sipped each caption in [from, from + count), clamped to the end.\n    function sippedBy(address who, uint256 from, uint256 count) external view returns (bool[] memory flags) {\n        uint256 len = captions.length;\n        if (from >= len) return new bool[](0);\n        uint256 end = from + count > len ? len : from + count;\n        flags = new bool[](end - from);\n        for (uint256 i = from; i < end; i++) flags[i - from] = sipped[i][who];\n    }\n\n    function captionsOf(address chef) external view returns (uint256[] memory) {\n        return byChef[chef];\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode.object"
+        ]
+      }
+    }
+  }
+}

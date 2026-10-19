@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Caption Café — Post like you mean it</title>
+<meta name="description" content="Tell the café what you're selling. AI brews a deck of ready-to-post social captions, you serve your favourite on BOT Chain, and the community sips the best ones onto Today's Specials.">
+<meta name="theme-color" content="#000000">
+<meta property="og:title" content="Caption Café">
+<meta property="og:description" content="AI-brewed social captions, served on BOT Chain.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23E9CCF3'/%3E%3Cpath d='M16 26h28v10a12 12 0 0 1-12 12h-4a12 12 0 0 1-12-12z' fill='%23111'/%3E%3Cpath d='M44 29h3a5 5 0 0 1 0 10h-4' fill='none' stroke='%23111' stroke-width='4'/%3E%3Cpath d='M25 12c-3 4 3 6 0 10M34 12c-3 4 3 6 0 10' fill='none' stroke='%23111' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #000000;
+    --lilac: #E9CCF3;
+    --lilac-glow: rgba(233, 204, 243, .55);
+    --ink: #111111;
+    --paper: #F2F2F2;
+    --muted: #8A8A8A;
+    --line: rgba(242, 242, 242, .28);
+    --mustard: #C9A43A;
+    --brick: #B23A2A;
+    --cocoa: #4A3426;
+    --danger: #FF7A6B;
+    --card: linear-gradient(180deg, #FFFFFF 0%, #CFCFCF 100%);
+    --serif: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif;
+    --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --gutter: clamp(16px, 4vw, 48px);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--black); color: var(--paper); font: 15px/1.5 var(--sans); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  body.locked { overflow: hidden; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; }
+  img { display: block; max-width: 100%; }
+  ::selection { background: var(--lilac); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--lilac); outline-offset: 3px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- Intro ---------- */
+  #intro { position: fixed; inset: 0; z-index: 100; background: var(--lilac); color: var(--ink); display: grid; place-items: center; transition: opacity .8s ease, visibility .8s; }
+  #intro.done { opacity: 0; visibility: hidden; }
+  #intro .count { font: 500 11px/1 var(--sans); letter-spacing: .24em; text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
+  #intro .bar { width: 120px; height: 1px; background: rgba(17,17,17,.2); position: relative; overflow: hidden; }
+  #intro .bar i { position: absolute; inset: 0; background: var(--ink); transform-origin: left; transform: scaleX(0); }
+
+  /* ---------- Header ---------- */
+  header.top { position: fixed; top: 0; left: 0; right: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 14px var(--gutter); padding-top: max(14px, env(safe-area-inset-top)); background: linear-gradient(180deg, rgba(0,0,0,.85), rgba(0,0,0,0)); }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: .02em; font-size: 15px; justify-self: start; }
+  .brand .mark { width: 30px; height: 30px; border-radius: 9px; background: var(--lilac); display: grid; place-items: center; }
+  .brand .mark svg { width: 20px; height: 20px; }
+  .tagline { font-size: 12px; color: var(--muted); text-align: center; max-width: 320px; line-height: 1.4; }
+  .wallet-slot { justify-self: end; display: flex; gap: 8px; align-items: center; }
+  .net-badge { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--mustard); padding: 4px 8px; border-radius: 999px; font-weight: 700; }
+
+  /* ---------- Buttons & chips ---------- */
+  .pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 22px; border-radius: 999px; border: 1px solid transparent; background: var(--paper); color: var(--ink); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; transition: box-shadow .25s, background .25s, transform .15s, opacity .2s; white-space: nowrap; }
+  .pill:hover:not(:disabled) { box-shadow: 0 0 0 1px var(--lilac), 0 0 28px var(--lilac-glow); }
+  .pill:active:not(:disabled) { transform: scale(.98); }
+  .pill:disabled { opacity: .38; cursor: not-allowed; }
+  .pill.lilac { background: var(--lilac); color: var(--ink); }
+  .pill.ghost { background: transparent; color: var(--paper); border-color: var(--line); }
+  .pill.dark { background: var(--ink); color: #fff; }
+  .pill.dark-ghost { background: transparent; color: var(--ink); border-color: rgba(17,17,17,.25); }
+  .pill.dark-ghost:hover:not(:disabled), .pill.dark:hover:not(:disabled) { box-shadow: 0 0 0 1px var(--lilac), 0 0 22px var(--lilac-glow); }
+  .pill.small { min-height: 36px; padding: 0 14px; font-size: 13px; }
+  .pill.big { min-height: 56px; padding: 0 34px; font-size: 16px; }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #5BD69B; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { min-height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--paper); font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .chip:hover { border-color: var(--lilac); }
+  .chip[aria-pressed="true"] { background: var(--lilac); color: var(--ink); border-color: var(--lilac); box-shadow: 0 0 22px rgba(233,204,243,.35); }
+
+  /* ---------- Sections / chapters ---------- */
+  /* ---------- Chapter transitions (the Grail-style "peel") ----------
+     Each chapter = a full-screen title .stage pinned with position: sticky, then a content .sheet that rises over it.
+     The next chapter is pulled up 100vh (.peel-next) so its stage sits underneath the last screen of the one before.
+     Scrolling sets --p (0 → 1) on every .peel as its bottom edge crosses the screen: it shrinks, tilts and lifts away. */
+  section.chapter { position: relative; }
+  section.chapter.plain { padding: 120px var(--gutter) 100px; background: var(--black); }
+  main > section, footer.finale { position: relative; }
+  /* Sections make no stacking context of their own: every stage shares layer 0 (a later chapter's stage paints over an
+     earlier one), every sheet is on layer 2 above all stages, and the hero is on top. */
+  .hero { z-index: 3; }
+  .peel-next { margin-top: -100vh; margin-top: -100svh; }
+  .stage { position: sticky; top: 0; z-index: 0; height: 100vh; height: 100svh; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 90px var(--gutter) 70px; }
+  .stage.lilac { background: var(--lilac); color: var(--ink); }
+  .stage.mustard { background: var(--mustard); color: var(--ink); }
+  .stage .corner { top: 88px; color: rgba(17,17,17,.6); }
+  .stage .corner b { color: var(--ink); }
+  .stage .section-title { position: relative; z-index: 1; font-size: clamp(56px, 13vw, 190px); margin-bottom: 26px; }
+  .stage .section-title span { display: block; }
+  .stage .lede { position: relative; z-index: 1; color: rgba(17,17,17,.72); margin-bottom: 0; }
+  .stage-hint { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: rgba(17,17,17,.55); animation: nudge 2.4s ease-in-out infinite; }
+  @keyframes nudge { 0%, 100% { translate: 0 0; } 50% { translate: 0 6px; } }
+  .stage-tiles { position: absolute; inset: 0; pointer-events: none; }
+  .stage-tiles .tile { position: absolute; }
+  /* The sheet starts where the previous section ends, so 100vh keeps it below the screen while that section peels away;
+     the extra 15vh is the beat where the revealed title holds the screen on its own. */
+  /* The stage rides in a track: it stays pinned while the previous section peels off (100vh), holds alone (--hold),
+     lets the sheet rise over it (100vh), then unpins hidden behind the sheet — so it never shows through the next peel. */
+  .stage-track { --hold: 15vh; height: calc(300vh + var(--hold)); height: calc(300svh + var(--hold)); }
+  .peel-next > .sheet { margin-top: -100vh; margin-top: -100svh; }
+  .sheet { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; background: var(--black); border-radius: 32px 32px 0 0; padding: 96px var(--gutter) 110px; box-shadow: 0 -24px 70px rgba(0,0,0,.35); }
+  .peel { --p: 0; transform-origin: 50% calc(100% - 50vh); transform: scale(calc(1 - .16 * var(--p))) rotate(calc(-6deg * var(--p))); border-bottom-left-radius: calc(min(1, var(--p) * 6) * 32px); border-bottom-right-radius: calc(min(1, var(--p) * 6) * 32px); }
+  .peel.peeling { will-change: transform; box-shadow: 0 0 0 1px rgba(233,204,243, calc(.4 * min(1, var(--p) * 6))), 0 50px 120px rgba(0,0,0,.75); }
+  .hero.peel.peeling { border-top-left-radius: calc(min(1, var(--p) * 6) * 32px); border-top-right-radius: calc(min(1, var(--p) * 6) * 32px); }
+  .corner { position: absolute; top: 28px; font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+  .corner.tl { left: var(--gutter); }
+  .corner.tr { right: var(--gutter); }
+  .corner b { color: var(--paper); font-weight: 600; }
+  .giant { font-family: var(--serif); font-weight: 400; text-transform: uppercase; letter-spacing: -.01em; line-height: .92; margin: 0; }
+  .section-title { font-size: clamp(44px, 9vw, 128px); text-align: center; margin-bottom: 18px; }
+  .lede { max-width: 520px; margin: 0 auto 56px; text-align: center; color: var(--muted); font-size: 15px; }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; min-height: 100vh; min-height: 100svh; overflow: hidden; background: var(--black); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 96px var(--gutter) 40px; --mx: 0; --my: 0; --sy: 0; }
+  .hero h1 { position: relative; z-index: 3; font-size: clamp(42px, 12.5vw, 200px); text-align: center; margin-top: 2vh; text-shadow: 0 0 40px rgba(0,0,0,.6); }
+  .hero h1 span { display: block; }
+  .hero .cta { position: relative; z-index: 4; margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .hero .cta small { color: var(--muted); font-size: 12px; letter-spacing: .04em; }
+  .float-field { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .float-item { position: absolute; left: var(--x); top: var(--y); transform: translate3d(calc(var(--mx) * var(--d) * 26px), calc(var(--my) * var(--d) * 26px + var(--sy) * var(--d) * -0.25px), 0) rotate(var(--r)); will-change: transform; }
+  .float-item > * { animation: bob 7s ease-in-out infinite; animation-delay: var(--delay, 0s); }
+  .float-item.dim { opacity: .55; filter: blur(.4px); }
+  @keyframes bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+  .glow-orb { position: absolute; width: 60vw; height: 60vw; max-width: 800px; max-height: 800px; left: 50%; top: 58%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(233,204,243,.16), rgba(233,204,243,0) 62%); z-index: 0; pointer-events: none; }
+
+  /* ---------- Caption card ---------- */
+  .card { position: relative; width: 260px; border-radius: 22px; background: var(--card); color: var(--ink); padding: 16px 16px 14px; box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.6) inset; display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .card.mini { width: 176px; padding: 12px; gap: 6px; border-radius: 16px; }
+  .card.mini .c-text { font-size: 13px; }
+  .card.mini .c-plat { display: none; }
+  .card.mini .c-tags { font-size: 10px; }
+  .c-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .c-emblem { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #6B6B6B; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .c-emblem svg { width: 22px; height: 22px; flex: none; }
+  .card.mini .c-emblem svg { width: 18px; height: 18px; }
+  .c-plat { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #6B6B6B; border: 1px solid rgba(17,17,17,.18); border-radius: 999px; padding: 3px 8px; }
+  .c-text { font-weight: 700; font-size: 17px; line-height: 1.32; letter-spacing: -.01em; margin: 0; word-wrap: break-word; white-space: pre-wrap; }
+  .c-tags { font-size: 12.5px; color: #4D4D4D; line-height: 1.4; word-break: break-word; margin: 0; }
+  .c-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #555; margin-top: auto; }
+  .avatars { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+  .avatar { width: 20px; height: 20px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px #EDEDED; }
+  .avatars .avatar + .avatar { margin-left: -12px; }
+  .avatars span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .sips { font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .house { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; background: var(--cocoa); color: #F3E6D6; border-radius: 999px; padding: 3px 8px; }
+
+  /* pattern tiles */
+  .tile { width: 96px; height: 96px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .tile svg { width: 100%; height: 100%; display: block; }
+  .tile.sm { width: 64px; height: 64px; border-radius: 9px; }
+  .tile.lg { width: 128px; height: 128px; border-radius: 14px; }
+
+  /* ---------- Order form ---------- */
+  /* The order is a light "menu card" so the form is easy to read and fill in. */
+  .order { position: relative; max-width: 980px; margin: 0 auto; display: grid; gap: 34px; background: var(--card); color: var(--ink); border-radius: 28px; padding: clamp(24px, 5vw, 52px); box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(233,204,243,.35), 0 0 80px rgba(233,204,243,.12); }
+  .order-tag { position: absolute; top: -16px; left: clamp(24px, 5vw, 52px); display: inline-flex; align-items: center; gap: 8px; background: var(--lilac); color: var(--ink); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; border-radius: 999px; padding: 7px 14px 7px 10px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+  .order-tag svg { width: 18px; height: 18px; }
+  .order-deco { position: absolute; pointer-events: none; }
+  .order-deco.a { top: -26px; right: 28px; transform: rotate(12deg); }
+  .order-deco.b { bottom: -22px; right: -18px; transform: rotate(-9deg); }
+  .field label, .field .label { display: block; font-size: 12px; color: #5C5C5C; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+  .field label span { text-transform: none; font-weight: 400; letter-spacing: 0; color: #7A7A7A; }
+  .field .label b { color: var(--ink); font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .chalk { width: 100%; background: rgba(255,255,255,.75); border: 1.5px solid rgba(17,17,17,.16); color: var(--ink); font: 500 18px/1.3 var(--sans); padding: 14px 16px; border-radius: 14px; transition: border-color .2s, box-shadow .2s, background .2s; }
+  .chalk::placeholder { color: #9A9A9A; font-weight: 400; }
+  .chalk:hover { border-color: rgba(17,17,17,.3); }
+  .chalk:focus { outline: none; background: #fff; border-color: var(--ink); box-shadow: 0 0 0 4px rgba(233,204,243,.9); }
+  .field .hint { font-size: 12.5px; color: #6B6B6B; margin-top: 8px; min-height: 18px; }
+  .field .hint.warn { color: #9B2C1F; font-weight: 500; }
+  .field .hint:empty { min-height: 0; margin: 0; }
+  .order-row { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .order .chip { border-color: rgba(17,17,17,.22); color: var(--ink); background: rgba(255,255,255,.6); }
+  .order .chip:hover { border-color: var(--ink); }
+  .order .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); box-shadow: 0 0 0 3px var(--lilac); }
+  .order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding-top: 22px; border-top: 1px dashed rgba(17,17,17,.2); }
+  .order-actions .hint { color: #6B4A78; font-size: 13.5px; font-weight: 500; }
+  .order .pill.lilac { background: var(--ink); color: #fff; }
+  .order .pill.lilac:disabled { opacity: .3; }
+
+  /* ---------- Deck ---------- */
+  #deck { min-height: 70vh; }
+  .deck-meta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; margin: 8px 0 36px; color: var(--muted); font-size: 13px; text-align: center; }
+  .deck { display: flex; justify-content: center; align-items: flex-start; gap: 0; padding: 20px 0 40px; perspective: 1600px; }
+  .deck .slot { position: relative; margin: 0 -14px; transform: translateY(var(--lift, 0)) rotate(var(--r, 0deg)); transition: transform .5s cubic-bezier(.2,.8,.2,1), z-index 0s; z-index: 1; animation: deal .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: var(--deal, 0s); }
+  .deck .slot:hover, .deck .slot:focus-within { transform: translateY(-14px) rotate(0deg); z-index: 5; }
+  .deck.dealt .slot { animation: none; }
+  @keyframes deal { from { opacity: 0; transform: translateY(80px) rotate(0deg) scale(.9); } }
+  .flip { position: relative; width: 280px; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.3,.7,.2,1); }
+  .flip.flipped { transform: rotateY(180deg); }
+  .flip > .face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .flip > .back { position: absolute; inset: 0; transform: rotateY(180deg); pointer-events: none; }
+  .flip.flipped > .back { pointer-events: auto; }
+  .flip.flipped > .face:not(.back) { pointer-events: none; }
+  .deck .card { width: 280px; min-height: 380px; }
+  .deck textarea.c-text, .deck textarea.c-tags { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; resize: none; padding: 4px 6px; margin: 0 -6px; border-radius: 8px; transition: background .2s; }
+  .deck textarea.c-text { font-weight: 700; font-size: 17px; line-height: 1.32; min-height: 110px; overflow: hidden; }
+  .deck textarea.c-tags { font-size: 12.5px; line-height: 1.4; color: #4D4D4D; overflow: hidden; min-height: 26px; }
+  .deck textarea.c-text:hover, .deck textarea.c-tags:hover, .deck textarea.c-text:focus, .deck textarea.c-tags:focus { background: rgba(17,17,17,.06); outline: none; }
+  .counter { font-size: 12px; font-variant-numeric: tabular-nums; color: #555; font-weight: 600; }
+  .counter.over { color: #C62D1E; }
+  .c-note { font-size: 11.5px; color: #C62D1E; line-height: 1.35; min-height: 0; }
+  .c-actions { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+  .c-status { font-size: 12px; color: #333; line-height: 1.4; }
+  .c-status.err { color: #B3261E; }
+  .card.back-card { background: var(--lilac); justify-content: space-between; height: 100%; }
+  .back-card .served-no { font-family: var(--serif); font-size: 64px; line-height: 1; text-transform: uppercase; margin: 8px 0 0; }
+  .back-card .stamp { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #5B3A6B; }
+  .back-card .links { display: grid; gap: 8px; }
+  .back-card a.tx { font-size: 12px; color: var(--ink); word-break: break-all; }
+  .shuffle { position: relative; height: 380px; width: 280px; margin: 0 auto; }
+  .shuffle .card { position: absolute; inset: 0; width: 280px; min-height: 380px; animation: shuffle 1.2s ease-in-out infinite; }
+  .shuffle .card:nth-child(2) { animation-delay: .15s; }
+  .shuffle .card:nth-child(3) { animation-delay: .3s; }
+  .shuffle .card:nth-child(4) { animation-delay: .45s; }
+  @keyframes shuffle { 0%, 100% { transform: translateX(0) rotate(0); } 30% { transform: translateX(-90px) rotate(-10deg); } 60% { transform: translateX(90px) rotate(9deg); } }
+  .skeleton { height: 12px; border-radius: 6px; background: rgba(17,17,17,.1); }
+  .brewing-label { text-align: center; color: var(--lilac); margin-top: 34px; letter-spacing: .04em; }
+  .deck-empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .deck-empty .tiles { display: flex; justify-content: center; gap: 14px; margin-bottom: 24px; }
+  .deck-empty .tiles > * { transform: rotate(var(--r)); }
+
+  /* ---------- Board ---------- */
+  .board-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; max-width: 1180px; margin: 0 auto 36px; }
+  .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); min-height: 36px; padding: 0 16px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 13px; }
+  .tabs button[aria-selected="true"] { background: var(--paper); color: var(--ink); }
+  .board { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 34px 26px; align-items: start; justify-items: center; }
+  .board .card { width: 100%; max-width: 300px; transform: rotate(var(--r, 0deg)); transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; animation: bob 8s ease-in-out infinite; animation-delay: var(--delay, 0s); }
+  .board .card:hover { transform: rotate(0deg) translateY(-6px); box-shadow: 0 30px 70px rgba(0,0,0,.65), 0 0 0 1px var(--lilac), 0 0 40px rgba(233,204,243,.25); }
+  .board .card.fresh { box-shadow: 0 0 0 2px var(--lilac), 0 0 50px var(--lilac-glow); }
+  .board .tile-wrap { display: flex; justify-content: center; align-items: center; align-self: center; padding: 6px 0; }
+  .board .tile-wrap .tile { transform: rotate(var(--r)); }
+  .board-msg { text-align: center; color: var(--muted); padding: 50px 0; max-width: 460px; margin: 0 auto; }
+  .board-msg .giant { font-size: clamp(30px, 5vw, 52px); color: var(--paper); margin-bottom: 14px; }
+  .card .c-open { position: absolute; inset: 0; border-radius: inherit; z-index: 0; cursor: pointer; background: none; border: 0; }
+  .card .c-foot, .card .c-actions-row { position: relative; z-index: 1; }
+  .c-actions-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(17,17,17,.2); background: transparent; color: var(--ink); cursor: pointer; display: inline-grid; place-items: center; }
+  .icon-btn:hover { box-shadow: 0 0 0 1px var(--lilac), 0 0 18px var(--lilac-glow); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* ---------- Modal ---------- */
+  .modal { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; animation: fade .3s ease; }
+  @keyframes fade { from { opacity: 0; } }
+  .modal-inner { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; max-width: 420px; width: 100%; text-align: center; }
+  .modal-inner .card { width: 100%; max-width: 340px; }
+  .modal-inner .card .c-text { font-size: 20px; }
+  .modal-close { position: fixed; top: 16px; right: 16px; z-index: 2; }
+  .modal-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .modal h2 { font-size: clamp(34px, 7vw, 54px); }
+  .modal-inner > p { color: var(--muted); margin: 0; }
+
+  /* ---------- Toast ---------- */
+  #toasts { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 80; display: grid; gap: 8px; width: min(440px, calc(100vw - 32px)); }
+  .toast { background: var(--paper); color: var(--ink); border-radius: 14px; padding: 12px 16px; font-size: 14px; box-shadow: 0 16px 50px rgba(0,0,0,.6); animation: fade .25s ease; }
+  .toast a { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Footer ---------- */
+  footer.finale { padding: 130px var(--gutter) 34px; overflow: clip; text-align: center; background: var(--black); --mx: 0; --my: 0; --sy: 0; }
+  footer.finale > :not(.float-field):not(.finale-stars):not(.corner) { position: relative; z-index: 2; }
+  .finale .float-field { z-index: 1; }
+  .finale .float-item { transform: translate3d(calc(var(--mx) * var(--d) * 22px), calc(var(--my) * var(--d) * 22px), 0) rotate(var(--r)); }
+  .finale-ribbon { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 40px auto 0; max-width: 640px; }
+  .finale-ribbon > span { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 12px; color: var(--paper); background: rgba(0,0,0,.55); }
+  .finale-ribbon svg { width: 18px; height: 18px; display: block; }
+  @media (max-width: 1180px) { .finale .float-item.hide-md { display: none; } }
+  .finale-stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(rgba(233,204,243,.5) 1px, transparent 1.5px), radial-gradient(rgba(242,242,242,.25) 1px, transparent 1.5px); background-size: 90px 90px, 140px 140px; background-position: 0 0, 45px 70px; mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 35%, #000 0%, transparent 70%); }
+  .app-tile { position: relative; display: inline-grid; place-items: center; width: 132px; height: 132px; border-radius: 32px; background: var(--lilac); text-decoration: none; margin: 30px auto 34px; transition: transform .3s; }
+  .app-tile::before { content: ''; position: absolute; inset: -120px; border-radius: 50%; background: radial-gradient(circle, rgba(233,204,243,.5), rgba(233,204,243,0) 62%); z-index: -1; transition: opacity .3s; }
+  .app-tile:hover { transform: translateY(-3px); }
+  .app-tile:hover::before { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
+  .app-tile img { width: 84px; height: 84px; border-radius: 20px; }
+  .finale .bold-line { font-size: clamp(22px, 3.4vw, 32px); font-weight: 800; letter-spacing: -.02em; margin: 0 0 8px; }
+  .finale .grey { color: var(--muted); font-size: 14px; margin: 0; }
+  .address-field { max-width: 1000px; margin: 64px auto 0; }
+  .address-field .label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .address-big { display: block; font-family: var(--serif); font-weight: 400; text-transform: uppercase; font-size: clamp(22px, 7.4vw, 92px); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: clip; text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 14px; transition: color .25s, border-color .25s; }
+  .address-big:hover { color: var(--lilac); border-bottom-color: var(--lilac); }
+  .explorer-link { display: inline-block; margin-top: 12px; color: var(--muted); font-size: 13px; text-decoration: none; }
+  .explorer-link:hover { color: var(--lilac); }
+  .finale-bottom { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 16px; margin-top: 110px; font-size: 12px; color: var(--muted); text-align: left; }
+  .finale-bottom .mid { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .finale-bottom .right { text-align: right; }
+  .finale-bottom p { margin: 0; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1080px) {
+    .deck { flex-wrap: wrap; gap: 26px; }
+    .deck .slot { margin: 0; }
+  }
+  @media (max-width: 720px) {
+    header.top { grid-template-columns: 1fr auto; }
+    .tagline { display: none; }
+    .brand .name { display: none; }
+    .sheet { padding: 84px var(--gutter) 80px; border-radius: 24px 24px 0 0; }
+    section.chapter.plain { padding: 96px var(--gutter) 72px; }
+    .stage { padding: 80px var(--gutter) 60px; }
+    .corner { top: 22px; font-size: 11px; }
+    .order-row { grid-template-columns: 1fr; gap: 26px; }
+    .order-deco { display: none; }
+    .finale .float-item.hide-sm { display: none; }
+    .deck .slot { --r: 0deg !important; --lift: 0 !important; }
+    .deck .card, .flip, .shuffle, .shuffle .card { width: min(320px, calc(100vw - 32px)); }
+    .deck .card { min-height: 0; }
+    .flip .back-card { min-height: 100%; }
+    .board { grid-template-columns: 1fr; }
+    .board .card { max-width: 340px; }
+    .finale-bottom { grid-template-columns: 1fr 1fr; }
+    .finale-bottom .mid { grid-column: 1 / -1; order: -1; margin-bottom: 18px; }
+    .float-item.hide-sm { display: none; }
+    .stage-tiles .hide-sm-tile { display: none; }
+    .stage-tiles .tile { width: 64px; height: 64px; }
+    .card.mini { width: 132px; }
+    .card.mini .c-tags, .card.mini .c-foot { display: none; }
+    .tile { width: 72px; height: 72px; }
+    .tile.lg { width: 92px; height: 92px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body class="locked">
+
+<div id="intro" role="status" aria-live="polite">
+  <div class="count"><span>Brewing…</span><span class="bar"><i></i></span><span id="intro-pct">0%</span></div>
+</div>
+
+<header class="top">
+  <a class="brand" href="#top" aria-label="Caption Café home">
+    <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9h13v4.5A5.5 5.5 0 0 1 11.5 19h-2A5.5 5.5 0 0 1 4 13.5z" fill="#111"/><path d="M17 10.5h1.5a2.5 2.5 0 0 1 0 5H16.5" fill="none" stroke="#111" stroke-width="1.8"/><path d="M8.5 3.5c-1.2 1.6 1.2 2.4 0 4M12.5 3.5c-1.2 1.6 1.2 2.4 0 4" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+    <span class="name">CAPTION CAFÉ</span>
+  </a>
+  <p class="tagline">Tell the café what you're selling. AI brews the captions — you serve your favourite on BOT Chain.</p>
+  <div class="wallet-slot" id="wallet-slot"></div>
+</header>
+
+<main id="top">
+  <!-- Hero -->
+  <section class="hero peel" id="hero" aria-label="Intro">
+    <div class="glow-orb" aria-hidden="true"></div>
+    <div class="float-field" id="float-field" aria-hidden="true"></div>
+    <h1 class="giant"><span>Post like</span><span>you mean it</span></h1>
+    <div class="cta">
+      <a class="pill lilac big" href="#order">Take the order ↓</a>
+      <small>Free to brew · Serving costs a little gas on BOT Chain</small>
+    </div>
+  </section>
+
+  <!-- Chapter 01: the order -->
+  <section class="chapter peel-next" id="order" aria-labelledby="order-title">
+    <div class="stage-track"><div class="stage lilac">
+      <div class="corner tl">About · <b>The Order</b></div>
+      <div class="corner tr">Chapter 01</div>
+      <div class="stage-tiles" aria-hidden="true"></div>
+      <h2 class="giant section-title" id="order-title"><span>Take</span><span>the order</span></h2>
+      <p class="lede">Tell us what's on the counter today. We'll brew four captions you can copy, tweak, and serve.</p>
+      <span class="stage-hint" aria-hidden="true">Scroll to order ↓</span>
+    </div></div>
+    <div class="sheet peel" id="order-sheet">
+    <form class="order" id="order-form" novalidate autocomplete="off">
+      <div class="order-tag"><span id="order-tag-icon"></span>Order ticket</div>
+      <div class="order-deco a" id="order-deco-a" aria-hidden="true"></div>
+      <div class="order-deco b" id="order-deco-b" aria-hidden="true"></div>
+      <div class="field">
+        <label for="f-business">Business name <span>(optional)</span></label>
+        <input class="chalk" id="f-business" name="business" maxlength="40" placeholder="e.g. Bean There Café">
+      </div>
+      <div class="order-row">
+        <div class="field">
+          <label for="f-product">What you're selling</label>
+          <input class="chalk" id="f-product" name="product" maxlength="80" placeholder="e.g. Iced oat latte" required>
+          <div class="hint" id="h-product"></div>
+        </div>
+        <div class="field">
+          <label for="f-audience">Who it's for</label>
+          <input class="chalk" id="f-audience" name="audience" maxlength="80" placeholder="e.g. Students near campus" required>
+          <div class="hint" id="h-audience"></div>
+        </div>
+      </div>
+      <div class="order-row">
+        <div class="field">
+          <span class="label" id="tone-label">Tone <b>— pick one or more</b></span>
+          <div class="chips" id="tone-chips" role="group" aria-labelledby="tone-label"></div>
+        </div>
+        <div class="field">
+          <span class="label" id="plat-label">Platform</span>
+          <div class="chips" id="plat-chips" role="radiogroup" aria-labelledby="plat-label"></div>
+        </div>
+      </div>
+      <div class="order-actions">
+        <button class="pill lilac big" type="submit" id="brew-btn" disabled>Brew captions</button>
+        <span class="hint" id="brew-hint" aria-live="polite">Tell us what you're selling and who it's for.</span>
+      </div>
+    </form>
+    </div>
+  </section>
+
+  <!-- Chapter 02: the deck -->
+  <section class="chapter peel-next" id="deck" aria-labelledby="deck-title">
+    <div class="stage-track"><div class="stage mustard">
+      <div class="corner tl">About · <b>The Deck</b></div>
+      <div class="corner tr">Chapter 02</div>
+      <div class="stage-tiles" aria-hidden="true"></div>
+      <h2 class="giant section-title" id="deck-title"><span>Your</span><span>deck</span></h2>
+      <p class="lede">Four cards, dealt fresh. Tweak one, copy it, or serve it on BOT Chain.</p>
+      <span class="stage-hint" aria-hidden="true">Scroll to your cards ↓</span>
+    </div></div>
+    <div class="sheet" id="deck-sheet">
+      <div id="deck-body"></div>
+    </div>
+  </section>
+
+  <!-- Chapter 03: today's specials -->
+  <!-- From here on the page scrolls normally (no peel transition). -->
+  <section class="chapter plain" id="specials" aria-labelledby="specials-title">
+    <div class="corner tl">About · <b>Today's Specials</b></div>
+    <div class="corner tr">Chapter 03</div>
+    <h2 class="giant section-title" id="specials-title">Today's specials</h2>
+    <p class="lede">Captions served on BOT Chain, sorted by ☕ sips. One sip per wallet per caption — yes, you can sip your own.</p>
+    <div id="specials-sheet">
+    <div class="board-bar">
+      <div class="tabs" role="tablist" id="board-tabs"></div>
+      <div class="chips" id="board-filters"></div>
+    </div>
+    <div id="board-body"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="finale" id="finale"></footer>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js" crossorigin="anonymous"></script>
+<script>
+(() => {
+  'use strict';
+
+  // ============================================================
+  // Config — the only values to edit after deploying.
+  // ============================================================
+  const CONFIG = {
+    networks: {
+      // `contract` on mainnet is the single source for the app, the footer address and the explorer link.
+      mainnet: { chainId: 677, name: 'BOT Chain', rpc: 'https://rpc.botchain.ai', explorer: 'https://scan.botchain.ai', contract: '0x9c95425b4EB4a12A3952F5A855382Cdc162cd7e1' },
+      testnet: { chainId: 968, name: 'BOT Chain Testnet', rpc: 'https://rpc.bohr.life', explorer: 'https://scan.bohr.life', contract: '' },
+    },
+    // AI Worker (worker/), e.g. 'https://captioncafe-ai.<account>.workers.dev/captions'. Empty → house blend only.
+    aiUrl: '',
+    aiTimeoutMs: 8000,
+  };
+
+  const TONES = [
+    { key: 'playful', label: 'Playful' },
+    { key: 'cosy', label: 'Cosy' },
+    { key: 'bold', label: 'Bold' },
+    { key: 'luxe', label: 'Luxe' },
+    { key: 'funny', label: 'Funny' },
+  ];
+  const PLATFORMS = [
+    { key: 'instagram', label: 'Instagram', limit: 300, maxTags: 8 },
+    { key: 'tiktok', label: 'TikTok', limit: 300, maxTags: 8 },
+    { key: 'x', label: 'X', limit: 280, maxTags: 3 },
+  ];
+  const ONCHAIN = { total: 320, business: 40 }; // bytes, mirrors the contract
+  const PAGE = 100;
+
+  const CAPTION_TUPLE = 'tuple(address chef, string business, string text, string hashtags, uint8 platform, uint8 tone, uint32 sips, uint64 servedAt)';
+  const ABI = [
+    'function serve(string business, string text, string hashtags, uint8 platform, uint8 tone) returns (uint256 id)',
+    'function sip(uint256 id)',
+    'function total() view returns (uint256)',
+    `function getCaption(uint256 id) view returns (${CAPTION_TUPLE})`,
+    `function getCaptions(uint256 from, uint256 count) view returns (${CAPTION_TUPLE}[])`,
+    'function sippedBy(address who, uint256 from, uint256 count) view returns (bool[])',
+    'function captionsOf(address chef) view returns (uint256[])',
+    'event Served(uint256 indexed id, address indexed chef, uint8 platform)',
+    'event Sipped(uint256 indexed id, address indexed by, uint32 sips)',
+    'error EmptyText()', 'error TooLong()', 'error BadTone()', 'error NotFound()', 'error AlreadySipped()',
+  ];
+  const REVERTS = {
+    EmptyText: 'The caption is empty.',
+    TooLong: 'Too long to stamp on-chain. Trim the caption, hashtags or business name.',
+    BadTone: 'Pick a tone.',
+    NotFound: 'Caption not on the menu.',
+    AlreadySipped: 'You already sipped this one.',
+  };
+
+  // ============================================================
+  // Network + mode
+  // ============================================================
+  function storage(key, value) {
+    try {
+      if (value === undefined) return localStorage.getItem(key);
+      if (value === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, value);
+      return true;
+    } catch { return value === undefined ? null : false; }
+  }
+
+  const params = new URLSearchParams(location.search);
+  const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  const netKey = params.get('net') === 'testnet' ? 'testnet' : 'mainnet';
+  const NET = { ...CONFIG.networks[netKey] };
+  // On localhost, pick up an address deployed from deploy.html so it can be tried before editing CONFIG.
+  if (!NET.contract && isLocal) NET.contract = storage('captioncafe.contract.' + NET.chainId) || '';
+  const MAINNET = { ...CONFIG.networks.mainnet };
+  if (!MAINNET.contract && isLocal) MAINNET.contract = storage('captioncafe.contract.' + MAINNET.chainId) || '';
+  const PREVIEW = !NET.contract; // no contract yet: serving and sipping are simulated in this browser
+  const CHAIN_HEX = '0x' + NET.chainId.toString(16);
+  const PREVIEW_WALLET = '0xCAFE00000000000000000000000000000000B007';
+
+  const shareUrl = (id) => `${location.origin}${location.pathname}?caption=${id}${netKey === 'testnet' ? '&net=testnet' : ''}`;
+
+  const state = {
+    account: null, chainId: null, previewWallet: false,
+    tones: ['playful'], platform: 'instagram',
+    deck: null, // { business, product, audience, platform, source: 'ai'|'house', cards: [...] }
+    brewing: false,
+    board: [], boardLoaded: false, boardError: null, sipped: new Set(),
+    tab: 'specials', filter: 'all', sipping: {}, fresh: null,
+  };
+
+  // ============================================================
+  // Small helpers
+  // ============================================================
+  const $ = (id) => document.getElementById(id);
+  function h(tag, props = {}, ...children) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'style') el.style.cssText = v;
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+      else if (k === 'html') el.innerHTML = v; // only ever used with static strings from this file
+      else if (k in el && typeof v !== 'string') el[k] = v;
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of children.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : String(c));
+    return el;
+  }
+  const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '');
+  const graphemes = (s) => [...s].length;
+  const bytes = (s) => new TextEncoder().encode(s).length;
+  const toneOf = (i) => TONES[i] || TONES[0];
+  const platOf = (key) => PLATFORMS.find((p) => p.key === key) || PLATFORMS[0];
+  const rand = (seed) => { const x = Math.sin(seed * 9301 + 49297) * 233280; return x - Math.floor(x); };
+
+  function normTags(str, max = 8) {
+    const words = String(str || '').split(/[\s,]+/).map((w) => w.replace(/^#+/, '').replace(/[^\p{L}\p{N}_]/gu, '')).filter(Boolean);
+    return [...new Set(words)].slice(0, max).map((w) => '#' + w).join(' ');
+  }
+  const fullText = (text, tags) => (tags ? `${text.trim()}\n\n${tags}` : text.trim());
+
+  function ago(sec) {
+    const s = Math.max(1, Math.floor(Date.now() / 1000 - sec));
+    if (s < 60) return 'just now';
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+    return `${Math.floor(s / 86400)}d ago`;
+  }
+
+  function avatar(addr) {
+    const a = (addr || '0x0').toLowerCase();
+    const n = parseInt(a.slice(2, 10), 16) || 1;
+    const hues = ['#E9CCF3', '#C9A43A', '#B23A2A', '#4A3426', '#8FB8A8', '#F2B880'];
+    const c1 = hues[n % hues.length], c2 = hues[(n >> 3) % hues.length];
+    return h('span', { class: 'avatar', title: a, style: `background: linear-gradient(135deg, ${c1} 0 50%, ${c2} 50% 100%)` });
+  }
+
+  function toast(...parts) {
+    const t = h('div', { class: 'toast' }, ...parts);
+    $('toasts').append(t);
+    setTimeout(() => t.remove(), 6000);
+  }
+  async function copy(text, what = 'Copied') {
+    try { await navigator.clipboard.writeText(text); toast(`${what} ✓`); }
+    catch {
+      const ta = h('textarea', { style: 'position:fixed;opacity:0' }); ta.value = text; document.body.append(ta); ta.select();
+      try { document.execCommand('copy'); toast(`${what} ✓`); } catch { toast('Could not copy. Select the text and copy it manually.'); }
+      ta.remove();
+    }
+  }
+  const friendly = (message) => Object.assign(new Error(message), { friendly: true });
+  function parseRevert(e) {
+    const iface = new ethers.Interface(ABI);
+    for (const data of [e?.data, e?.info?.error?.data?.data, e?.info?.error?.data, e?.error?.data?.data, e?.error?.data]) {
+      if (typeof data !== 'string' || !data.startsWith('0x')) continue;
+      try { return iface.parseError(data)?.name; } catch { /* not ours */ }
+    }
+    return null;
+  }
+  const isCancel = (e) => e?.code === 4001 || e?.code === 'ACTION_REJECTED' || e?.info?.error?.code === 4001;
+  function explain(e) {
+    if (e?.friendly) return e.message;
+    if (isCancel(e)) return 'Cancelled in MetaMask. Nothing was sent.';
+    const name = e?.revert?.name || parseRevert(e);
+    if (name && REVERTS[name]) return REVERTS[name];
+    if (e?.code === 'INSUFFICIENT_FUNDS' || /insufficient funds/i.test(e?.message || '')) return 'Not enough BOT for the gas fee.';
+    if (e?.code === -32002) return 'MetaMask is already asking. Open MetaMask to continue.';
+    return e?.shortMessage || e?.message || 'Something went wrong. Please try again.';
+  }
+
+  // ============================================================
+  // Art: emblems and pattern tiles (our own drawings)
+  // ============================================================
+  const EMBLEMS = {
+    // Playful: croissant
+    playful: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M3 15c1-5 5-8 9-8s8 3 9 8c-2 1-3 .5-4-1-1 2-3 3-5 3s-4-1-5-3c-1 1.5-2 2-4 1z" fill="#C9A43A"/><path d="M9 8.5 10 15M15 8.5 14 15"/></svg>',
+    // Cosy: cup
+    cosy: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"><path d="M4 10h12v3.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5z" fill="#E9CCF3"/><path d="M16 11.5h1.5a2.5 2.5 0 0 1 0 5H15.5"/><path d="M8 4c-1 1.4 1 2.2 0 3.6M12 4c-1 1.4 1 2.2 0 3.6"/></svg>',
+    // Bold: bean
+    bold: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><ellipse cx="12" cy="12" rx="6.5" ry="8.5" transform="rotate(30 12 12)" fill="#4A3426"/><path d="M8.5 6.5c3 2 1 5 3.5 6.5s2 3.5 3.5 4.5" stroke="#F2E3D0"/></svg>',
+    // Luxe: crown
+    luxe: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 8 7.5 12 12 5l4.5 7 4-4-2 10h-13z" fill="#C9A43A"/><path d="M5.5 20.5h13"/></svg>',
+    // Funny: grinning sugar cube
+    funny: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="#B23A2A"/><path d="M8.5 10v.5M15.5 10v.5" stroke="#fff" stroke-width="2.2"/><path d="M7.5 14c2.5 3 6.5 3 9 0" stroke="#fff"/></svg>',
+  };
+  const emblem = (toneKey) => h('span', { html: EMBLEMS[toneKey] || EMBLEMS.cosy });
+
+  const TILES = [
+    // coffee beans on mustard
+    (id) => `<svg viewBox="0 0 96 96"><defs><pattern id="${id}" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#C9A43A"/><ellipse cx="12" cy="12" rx="5" ry="7.5" transform="rotate(35 12 12)" fill="#4A3426"/><path d="M9 7c3 2 1 5 3 6s2 3 3 4" stroke="#C9A43A" stroke-width="1.4" fill="none"/></pattern></defs><rect width="96" height="96" fill="url(#${id})"/></svg>`,
+    // cup tops on brick
+    (id) => `<svg viewBox="0 0 96 96"><defs><pattern id="${id}" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="#B23A2A"/><circle cx="16" cy="16" r="10" fill="#E9CCF3"/><circle cx="16" cy="16" r="6" fill="#4A3426"/><path d="M13 14c2-2 4-2 6 0" stroke="#E9CCF3" stroke-width="1.5" fill="none"/></pattern></defs><rect width="96" height="96" fill="url(#${id})"/></svg>`,
+    // waves on cocoa
+    (id) => `<svg viewBox="0 0 96 96"><defs><pattern id="${id}" width="32" height="16" patternUnits="userSpaceOnUse"><rect width="32" height="16" fill="#4A3426"/><path d="M0 8c8-8 8 8 16 0s8 8 16 0" stroke="#C9A43A" stroke-width="3.2" fill="none"/></pattern></defs><rect width="96" height="96" fill="url(#${id})"/></svg>`,
+    // heraldic lattice on lilac
+    (id) => `<svg viewBox="0 0 96 96"><defs><pattern id="${id}" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#E9CCF3"/><path d="M12 2 22 12 12 22 2 12z" fill="#B23A2A"/><circle cx="12" cy="12" r="3" fill="#E9CCF3"/></pattern></defs><rect width="96" height="96" fill="url(#${id})"/></svg>`,
+    // rosettes on mustard
+    (id) => `<svg viewBox="0 0 96 96"><defs><pattern id="${id}" width="48" height="48" patternUnits="userSpaceOnUse"><rect width="48" height="48" fill="#C9A43A"/><g fill="#B23A2A"><ellipse cx="24" cy="12" rx="5" ry="9"/><ellipse cx="24" cy="36" rx="5" ry="9"/><ellipse cx="12" cy="24" rx="9" ry="5"/><ellipse cx="36" cy="24" rx="9" ry="5"/></g><circle cx="24" cy="24" r="5" fill="#4A3426"/><circle cx="0" cy="0" r="6" fill="#4A3426"/><circle cx="48" cy="48" r="6" fill="#4A3426"/><circle cx="0" cy="48" r="6" fill="#4A3426"/><circle cx="48" cy="0" r="6" fill="#4A3426"/></pattern></defs><rect width="96" height="96" fill="url(#${id})"/></svg>`,
+    // checker cups on cocoa / lilac
+    (id) => `<svg viewBox="0 0 96 96"><defs><pattern id="${id}" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="#4A3426"/><rect width="16" height="16" fill="#E9CCF3"/><rect x="16" y="16" width="16" height="16" fill="#E9CCF3"/><path d="M4 6h8v3a4 4 0 0 1-8 0z" fill="#4A3426"/><path d="M20 22h8v3a4 4 0 0 1-8 0z" fill="#4A3426"/></pattern></defs><rect width="96" height="96" fill="url(#${id})"/></svg>`,
+  ];
+  let tileSeq = 0;
+  const tile = (i, size = '') => h('div', { class: `tile ${size}`, html: TILES[i % TILES.length](`pt${++tileSeq}`) });
+
+  // ============================================================
+  // Caption card (read-only: hero, board, share view)
+  // ============================================================
+  function captionCard(c, { mini = false, board = false } = {}) {
+    const tone = toneOf(c.tone);
+    const plat = PLATFORMS[c.platform] || PLATFORMS[0];
+    const card = h('article', { class: `card${mini ? ' mini' : ''}${state.fresh === c.id ? ' fresh' : ''}`, 'aria-label': `Caption ${c.id != null ? '#' + c.id : ''}` },
+      h('div', { class: 'c-head' },
+        h('span', { class: 'c-emblem' }, emblem(tone.key), tone.label),
+        h('span', { class: 'c-plat' }, plat.label)),
+      h('p', { class: 'c-text' }, c.text),
+      c.hashtags ? h('p', { class: 'c-tags' }, c.hashtags) : null,
+      h('div', { class: 'c-foot' },
+        h('span', { class: 'avatars' }, avatar(c.chef), c.business ? h('span', {}, c.business) : h('span', {}, short(c.chef))),
+        h('span', { class: 'sips', title: `${c.sips} sips` }, `☕ ${c.sips}`)),
+    );
+    if (board) {
+      card.prepend(h('button', { class: 'c-open', 'aria-label': `Open caption #${c.id}`, onclick: () => openCaption(c.id) }));
+      const sipped = state.sipped.has(c.id);
+      const busy = state.sipping[c.id];
+      card.append(h('div', { class: 'c-actions-row' },
+        h('button', { class: 'pill dark small', disabled: sipped || !!busy, onclick: () => sip(c.id), 'aria-label': sipped ? 'Sipped' : `Sip caption #${c.id}` },
+          busy ? (busy === 'confirm' ? 'Confirm in MetaMask…' : 'Sipping…') : sipped ? '☕ Sipped' : '☕ Sip'),
+        h('span', { style: 'display:flex;gap:6px' },
+          h('button', { class: 'icon-btn', title: 'Copy caption', 'aria-label': 'Copy caption', onclick: () => copy(fullText(c.text, c.hashtags), 'Caption copied'),
+            html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>' }),
+          h('button', { class: 'icon-btn', title: 'Copy share link', 'aria-label': 'Copy share link', onclick: () => copy(shareUrl(c.id), 'Share link copied'),
+            html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>' })),
+      ));
+      card.style.setProperty('--r', `${((rand(c.id + 1) - .5) * 6).toFixed(2)}deg`);
+      card.style.setProperty('--delay', `${(-rand(c.id + 7) * 8).toFixed(2)}s`);
+    }
+    return card;
+  }
+
+  // ============================================================
+  // Data stores: chain (real) and preview (this browser only)
+  // ============================================================
+  function normCaption(r, id) {
+    return {
+      id, chef: ethers.getAddress(r.chef), business: r.business, text: r.text, hashtags: r.hashtags,
+      platform: Number(r.platform), tone: Number(r.tone), sips: Number(r.sips), servedAt: Number(r.servedAt),
+    };
+  }
+
+  // Lower-casing first accepts an address pasted with the wrong checksum casing.
+  const contractAddress = () => ethers.getAddress(NET.contract.trim().toLowerCase());
+  let readerCache = null;
+  const reader = () => (readerCache ||= new ethers.Contract(contractAddress(), ABI, new ethers.JsonRpcProvider(NET.rpc, NET.chainId, { staticNetwork: true })));
+  async function writer() {
+    const signer = await new ethers.BrowserProvider(window.ethereum).getSigner();
+    return new ethers.Contract(contractAddress(), ABI, signer);
+  }
+
+  const chainStore = {
+    async all() {
+      const total = Number(await reader().total());
+      const pages = [];
+      for (let from = 0; from < total; from += PAGE) pages.push(reader().getCaptions(from, PAGE));
+      return (await Promise.all(pages)).flat().map((r, i) => normCaption(r, i));
+    },
+    async get(id) {
+      try { return normCaption(await reader().getCaption(id), id); }
+      catch (e) { if ((e?.revert?.name || parseRevert(e)) === 'NotFound') return null; throw e; }
+    },
+    async sippedBy(addr, total) {
+      const out = new Set();
+      for (let from = 0; from < total; from += PAGE) {
+        const flags = await reader().sippedBy(addr, from, PAGE);
+        flags.forEach((f, i) => f && out.add(from + i));
+      }
+      return out;
+    },
+    async serve(c, onStep) {
+      const contract = await writer();
+      onStep('confirm');
+      const tx = await contract.serve(c.business, c.text, c.hashtags, c.platform, c.tone);
+      onStep('mining', tx.hash);
+      const receipt = await tx.wait();
+      if (receipt.status !== 1) throw friendly('The transaction failed on-chain. Nothing was served.');
+      const log = receipt.logs.map((l) => { try { return contract.interface.parseLog(l); } catch { return null; } }).find((l) => l?.name === 'Served');
+      return { id: Number(log.args.id), hash: tx.hash };
+    },
+    async sip(id, onStep) {
+      const contract = await writer();
+      await contract.sip.staticCall(id); // surfaces AlreadySipped before MetaMask opens
+      onStep('confirm');
+      const tx = await contract.sip(id);
+      onStep('mining', tx.hash);
+      const receipt = await tx.wait();
+      if (receipt.status !== 1) throw friendly('The transaction failed on-chain.');
+      return { hash: tx.hash };
+    },
+  };
+
+  const DEMO = [
+    ['0x1a2B000000000000000000000000000000c0FFee', 'Bean There', 'Iced oat latte, but make it a whole mood. Your 3pm slump never stood a chance.', '#icedlatte #oatmilk #campuslife', 0, 0, 14],
+    ['0x77aa00000000000000000000000000000000beef', 'Crumb Club', 'Me: I’ll be productive today.\nAlso me: one almond croissant later… 🥐', '#croissant #bakery', 2, 4, 11],
+    ['0x5eed000000000000000000000000000000000042', 'Velvet Bloom', 'Quietly exceptional. Hand-tied peonies for the ones who notice details.', '#peonies #florist #giftideas #slowliving', 0, 3, 9],
+    ['0x9c0d0000000000000000000000000000000000aa', 'Stitch & Steam', 'POV: your jacket finally fits like it was made for you. Because now it was.', '#tailoring #alterations #pov', 1, 2, 7],
+    ['0x0bad00000000000000000000000000000000c0de', 'Night Owl Noodles', 'Open till 2am. Your group chat already knows what this means. 🍜', '#latenight #noodles', 2, 0, 5],
+    ['0x3e3e000000000000000000000000000000000777', 'Moss & Mug', 'Slow down. A warm chai and a window seat are waiting for you this weekend.', '#chai #cosycafe #weekendvibes', 0, 1, 3],
+  ];
+  const previewStore = {
+    key: 'captioncafe.preview.v1',
+    read() {
+      try {
+        const data = JSON.parse(storage(this.key) || 'null');
+        if (data && Array.isArray(data.captions)) return data;
+      } catch { /* reseed */ }
+      const now = Math.floor(Date.now() / 1000);
+      const captions = DEMO.map(([chef, business, text, hashtags, platform, tone, sips], id) => ({ id, chef, business, text, hashtags, platform, tone, sips, servedAt: now - (DEMO.length - id) * 5400 }));
+      return { captions, sips: {} };
+    },
+    write(data) { storage(this.key, JSON.stringify(data)); },
+    async all() { return this.read().captions; },
+    async get(id) { return this.read().captions[id] || null; },
+    async sippedBy(addr) { const s = this.read().sips; return new Set(Object.keys(s).filter((id) => s[id].includes(addr.toLowerCase())).map(Number)); },
+    async serve(c, onStep) {
+      onStep('confirm'); await new Promise((r) => setTimeout(r, 600));
+      const hash = '0x' + [...crypto.getRandomValues(new Uint8Array(32))].map((b) => b.toString(16).padStart(2, '0')).join('');
+      onStep('mining', hash); await new Promise((r) => setTimeout(r, 900));
+      const data = this.read();
+      const id = data.captions.length;
+      data.captions.push({ id, chef: state.account, ...c, sips: 0, servedAt: Math.floor(Date.now() / 1000) });
+      this.write(data);
+      return { id, hash };
+    },
+    async sip(id, onStep) {
+      const data = this.read();
+      if (!data.captions[id]) throw friendly(REVERTS.NotFound);
+      const who = state.account.toLowerCase();
+      data.sips[id] ||= [];
+      if (data.sips[id].includes(who)) throw friendly(REVERTS.AlreadySipped);
+      onStep('confirm'); await new Promise((r) => setTimeout(r, 400));
+      onStep('mining'); await new Promise((r) => setTimeout(r, 500));
+      data.sips[id].push(who);
+      data.captions[id].sips += 1;
+      this.write(data);
+      return { hash: null };
+    },
+  };
+  if (PREVIEW && params.has('reset')) storage(previewStore.key, null);
+  const store = PREVIEW ? previewStore : chainStore;
+
+  // ============================================================
+  // Wallet
+  // ============================================================
+  async function switchChain() {
+    const eth = window.ethereum;
+    try {
+      await eth.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_HEX }] });
+    } catch (e) {
+      const unknownChain = e.code === 4902 || e?.data?.originalError?.code === 4902 || /unrecognized chain/i.test(e.message || '');
+      if (!unknownChain) throw e;
+      await eth.request({
+        method: 'wallet_addEthereumChain',
+        params: [{ chainId: CHAIN_HEX, chainName: NET.name, nativeCurrency: { name: 'BOT', symbol: 'BOT', decimals: 18 }, rpcUrls: [NET.rpc], blockExplorerUrls: [NET.explorer] }],
+      });
+    }
+    state.chainId = Number(await eth.request({ method: 'eth_chainId' }));
+    if (state.chainId !== NET.chainId) throw friendly(`MetaMask is not on ${NET.name}.`);
+    renderWallet();
+  }
+
+  async function setAccount(account, { preview = false } = {}) {
+    const next = account ? ethers.getAddress(account) : null;
+    if (next === state.account && preview === state.previewWallet) return;
+    state.account = next;
+    state.previewWallet = preview;
+    state.sipped = new Set();
+    renderWallet();
+    await loadSipped();
+    renderBoard();
+  }
+
+  async function connect() {
+    const eth = window.ethereum;
+    if (!eth) {
+      if (PREVIEW) { await setAccount(PREVIEW_WALLET, { preview: true }); storage('captioncafe.previewWallet', '1'); toast('Preview wallet connected — nothing touches the chain.'); return true; }
+      installModal();
+      return false;
+    }
+    try {
+      const [account] = await eth.request({ method: 'eth_requestAccounts' });
+      state.chainId = Number(await eth.request({ method: 'eth_chainId' }));
+      await setAccount(account);
+      if (!PREVIEW && state.chainId !== NET.chainId) await switchChain();
+      return !!state.account;
+    } catch (e) {
+      if (!isCancel(e)) toast(explain(e));
+      renderWallet();
+      return false;
+    }
+  }
+
+  const wrongNetwork = () => !PREVIEW && !state.previewWallet && !!state.account && state.chainId !== NET.chainId;
+
+  // Connected and on BOT Chain, ready to send a transaction.
+  async function ensureReady() {
+    if (!state.account) { if (!(await connect())) return false; }
+    if (wrongNetwork()) {
+      try { await switchChain(); } catch (e) { if (!isCancel(e)) toast(explain(e)); return false; }
+    }
+    return true;
+  }
+
+  async function initWallet() {
+    const eth = window.ethereum;
+    if (!eth) {
+      if (PREVIEW && storage('captioncafe.previewWallet')) await setAccount(PREVIEW_WALLET, { preview: true });
+      return;
+    }
+    eth.on?.('accountsChanged', ([account]) => setAccount(account));
+    eth.on?.('chainChanged', (id) => { state.chainId = Number(id); renderWallet(); });
+    try {
+      const [account] = await eth.request({ method: 'eth_accounts' });
+      state.chainId = Number(await eth.request({ method: 'eth_chainId' }));
+      if (account) await setAccount(account);
+    } catch { /* stay signed out */ }
+  }
+
+  function renderWallet() {
+    const slot = $('wallet-slot');
+    const parts = [];
+    if (netKey === 'testnet') parts.push(h('span', { class: 'net-badge' }, 'Testnet'));
+    if (PREVIEW) parts.push(h('span', { class: 'net-badge', title: 'No contract configured: serving and sipping are simulated in this browser.' }, 'Preview'));
+    if (!window.ethereum && !PREVIEW) {
+      parts.push(h('a', { class: 'pill small', href: 'https://metamask.io/download/', target: '_blank', rel: 'noopener' }, 'Install MetaMask'));
+    } else if (!state.account) {
+      parts.push(h('button', { class: 'pill small', onclick: connect }, 'Connect wallet'));
+    } else if (wrongNetwork()) {
+      parts.push(h('button', { class: 'pill lilac small', onclick: () => switchChain().catch((e) => { if (!isCancel(e)) toast(explain(e)); }) }, 'Switch to BOT Chain'));
+    } else {
+      parts.push(h('button', { class: 'pill ghost small', title: state.account, onclick: () => { state.tab = 'mine'; renderBoard(); $('specials-sheet').scrollIntoView(); } }, h('span', { class: 'dot' }), short(state.account)));
+    }
+    slot.replaceChildren(...parts);
+  }
+
+  function installModal() {
+    openModal(h('div', { class: 'modal-inner' },
+      h('h2', { class: 'giant' }, 'Install MetaMask'),
+      h('p', {}, 'Serving and sipping happen on BOT Chain, so you need a wallet. Brewing and copying captions work without one.'),
+      h('div', { class: 'modal-row' },
+        h('a', { class: 'pill lilac', href: 'https://metamask.io/download/', target: '_blank', rel: 'noopener' }, 'Get MetaMask ↗'),
+        h('button', { class: 'pill ghost', onclick: closeModal }, 'Not now'))));
+  }
+
+  // ============================================================
+  // Chapter 01 — the order
+  // ============================================================
+  const form = $('order-form');
+  const fields = { business: $('f-business'), product: $('f-product'), audience: $('f-audience') };
+  const touched = {};
+
+  function renderChips() {
+    $('tone-chips').replaceChildren(...TONES.map((t) => h('button', {
+      type: 'button', class: 'chip', 'aria-pressed': String(state.tones.includes(t.key)),
+      onclick: () => {
+        if (state.tones.includes(t.key)) { if (state.tones.length > 1) state.tones = state.tones.filter((k) => k !== t.key); }
+        else state.tones = [...state.tones, t.key];
+        renderChips();
+      },
+    }, t.label)));
+    $('plat-chips').replaceChildren(...PLATFORMS.map((p) => h('button', {
+      type: 'button', class: 'chip', role: 'radio', 'aria-checked': String(state.platform === p.key), 'aria-pressed': String(state.platform === p.key),
+      onclick: () => { state.platform = p.key; renderChips(); },
+    }, p.label)));
+  }
+
+  function readOrder() {
+    return {
+      business: fields.business.value.trim().replace(/\s+/g, ' '),
+      product: fields.product.value.trim().replace(/\s+/g, ' '),
+      audience: fields.audience.value.trim().replace(/\s+/g, ' '),
+      tones: [...state.tones], platform: state.platform,
+    };
+  }
+
+  function validateOrder() {
+    const o = readOrder();
+    const missing = [];
+    if (!o.product) missing.push('product');
+    if (!o.audience) missing.push('audience');
+    $('h-product').textContent = touched.product && !o.product ? "What's on the counter? e.g. iced oat latte" : '';
+    $('h-audience').textContent = touched.audience && !o.audience ? 'Who is it for? e.g. students near campus' : '';
+    $('h-product').classList.toggle('warn', !!$('h-product').textContent);
+    $('h-audience').classList.toggle('warn', !!$('h-audience').textContent);
+    $('brew-btn').disabled = !!missing.length || state.brewing;
+    $('brew-hint').textContent = missing.length === 2 ? "Tell us what you're selling and who it's for."
+      : missing[0] === 'product' ? "Tell us what you're selling." : missing[0] === 'audience' ? "Tell us who it's for." : state.brewing ? 'Brewing…' : '';
+    return missing.length ? null : o;
+  }
+
+  for (const [k, el] of Object.entries(fields)) {
+    el.addEventListener('input', validateOrder);
+    el.addEventListener('blur', () => { touched[k] = true; validateOrder(); });
+  }
+  form.addEventListener('submit', (e) => { e.preventDefault(); touched.product = touched.audience = true; const o = validateOrder(); if (o) brew(o); });
+
+  // ============================================================
+  // Brewing — AI Worker with a house-blend fallback
+  // ============================================================
+  const HOUSE = {
+    playful: [
+      '{Product}, but make it a whole mood. ✨',
+      'Plot twist: your day just got better. {Product} is here{atBiz}.',
+      'Roses are red, {product} is calling. Answer it{atBiz}.',
+      'Main character energy, now available as {product}. 💫',
+    ],
+    cosy: [
+      'Slow down. {Product}{atBiz} is waiting for you.',
+      'Made for {audience}: warm, simple, and exactly what you needed. {Product}.',
+      'Your new favourite little ritual: {product}{atBiz}. ☕',
+      'Some days just need {product}. Today feels like one of them.',
+    ],
+    bold: [
+      '{PRODUCT}. No notes.',
+      '{Audience}, this one is for you. {Product}{atBiz}. Don’t miss it.',
+      'You don’t need another option. You need {product}.',
+      'Fresh today{atBiz}: {product}. Come get it while it lasts.',
+    ],
+    luxe: [
+      'Quietly exceptional. {Product}{atBiz}.',
+      'Some things are worth savouring. {Product} is one of them.',
+      'Made with care, for {audience}. {Product}, as it should be.',
+      'An invitation to slow down: {product}{atBiz}.',
+    ],
+    funny: [
+      'Me: I’ll be productive today.\nAlso me: {product}. 🙃',
+      'Not a solution to all your problems. But {product} is a great start.',
+      'Warning: {product} may cause sudden happiness among {audience}.',
+      'Group chat: “where are we going?”\nMe: {product}{atBiz}. Obviously.',
+    ],
+  };
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const camel = (s) => s.split(/[^\p{L}\p{N}]+/u).filter(Boolean).map((w, i) => (i ? cap(w.toLowerCase()) : w.toLowerCase())).join('');
+
+  function houseBlend(o) {
+    const fill = (t) => t
+      .replace('{PRODUCT}', o.product.toUpperCase())
+      .replace('{Product}', cap(o.product)).replace('{product}', o.product.toLowerCase())
+      .replace('{Audience}', cap(o.audience)).replace('{audience}', o.audience.toLowerCase())
+      .replace('{atBiz}', o.business ? ` at ${o.business}` : '');
+    const plat = platOf(o.platform);
+    const base = [camel(o.product), o.business ? camel(o.business) : '', 'shoplocal', 'smallbusiness', 'treatyourself', 'newfavourite', 'supportlocal', 'todaysspecial'].filter(Boolean);
+    const offset = Math.floor(Math.random() * 4);
+    return Array.from({ length: 4 }, (_, i) => {
+      const tone = o.tones[i % o.tones.length];
+      const list = HOUSE[tone];
+      const nth = Math.floor(i / o.tones.length); // how many cards of this tone came before, so four cards of one tone never repeat
+      const text = fill(list[(nth + offset) % list.length]);
+      const tags = normTags(base.slice(0, plat.maxTags === 3 ? 3 : 5 + (i % 3)).join(' '), plat.maxTags);
+      return { text, hashtags: tags, tone };
+    });
+  }
+
+  async function askAI(o, avoid) {
+    if (!CONFIG.aiUrl) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), CONFIG.aiTimeoutMs);
+    try {
+      const res = await fetch(CONFIG.aiUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+        body: JSON.stringify({ business: o.business, product: o.product, audience: o.audience, tones: o.tones, platform: o.platform, avoid }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data?.captions) || data.captions.length < 4) return null;
+      const plat = platOf(o.platform);
+      const cards = data.captions.slice(0, 4).map((c) => ({
+        text: String(c?.text || '').trim(),
+        hashtags: normTags(Array.isArray(c?.hashtags) ? c.hashtags.join(' ') : '', plat.maxTags),
+        tone: TONES.some((t) => t.key === c?.tone) ? c.tone : o.tones[0],
+      }));
+      return cards.every((c) => c.text) ? cards : null;
+    } catch { return null; }
+    finally { clearTimeout(timer); }
+  }
+
+  async function brew(o) {
+    if (state.brewing) return;
+    const avoid = state.deck ? state.deck.cards.map((c) => c.text.slice(0, 60)) : [];
+    state.brewing = true;
+    validateOrder();
+    renderDeck();
+    $('deck-sheet').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const started = Date.now();
+    let cards = await askAI(o, avoid);
+    const source = cards ? 'ai' : 'house';
+    if (!cards) cards = houseBlend(o);
+    // Let the shuffle play for a beat even when the answer is instant.
+    const wait = 1100 - (Date.now() - started);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    state.deck = { ...o, source, cards: cards.map((c) => ({ ...c, status: null })) };
+    state.brewing = false;
+    validateOrder();
+    renderDeck();
+  }
+
+  // ============================================================
+  // Chapter 02 — the deck
+  // ============================================================
+  function measure(deck, c) {
+    const plat = platOf(deck.platform);
+    const tags = normTags(c.hashtags, plat.maxTags);
+    const text = c.text.trim();
+    const chars = graphemes(tags ? `${text} ${tags}` : text);
+    const chainBytes = bytes(deck.business) + bytes(text) + bytes(tags);
+    let note = '';
+    if (!text) note = 'Write something first.';
+    else if (chars > plat.limit) note = `Over the ${plat.label} limit — trim ${chars - plat.limit} to serve.`;
+    else if (bytes(deck.business) > ONCHAIN.business) note = 'Business name is too long to stamp on-chain.';
+    else if (chainBytes > ONCHAIN.total) note = `Too long to stamp on-chain (${chainBytes}/${ONCHAIN.total} bytes incl. business name). Trim a little.`;
+    return { chars, limit: plat.limit, tags, text, ok: !note, note };
+  }
+
+  function deckCard(deck, c, i) {
+    const tone = TONES.find((t) => t.key === c.tone) || TONES[0];
+    const plat = platOf(deck.platform);
+    const counter = h('span', { class: 'counter' });
+    const note = h('div', { class: 'c-note', 'aria-live': 'polite' });
+    const serveBtn = h('button', { class: 'pill dark small', onclick: () => serve(i) }, 'Serve it on BOT Chain');
+    const textarea = h('textarea', { class: 'c-text', rows: 4, maxlength: 600, 'aria-label': `Caption ${i + 1} text` });
+    textarea.value = c.text;
+    const tagsInput = h('textarea', { class: 'c-tags', rows: 1, maxlength: 300, 'aria-label': `Caption ${i + 1} hashtags`, placeholder: '#add #hashtags' });
+    tagsInput.value = c.hashtags;
+    const busy = c.status && ['confirm', 'mining'].includes(c.status.step);
+
+    const fit = (el, min) => { el.style.height = 'auto'; el.style.height = Math.max(min, el.scrollHeight) + 'px'; };
+    const grow = () => { fit(textarea, 110); fit(tagsInput, 26); };
+    const update = () => {
+      const m = measure(deck, c);
+      counter.textContent = `${m.chars} / ${m.limit}`;
+      counter.classList.toggle('over', m.chars > m.limit);
+      note.textContent = m.ok ? '' : m.note;
+      serveBtn.disabled = !m.ok || busy;
+    };
+    textarea.addEventListener('input', () => { c.text = textarea.value; grow(); update(); });
+    tagsInput.addEventListener('input', () => { c.hashtags = tagsInput.value.replace(/\n/g, ' '); grow(); update(); });
+    tagsInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+    tagsInput.addEventListener('blur', () => { c.hashtags = normTags(tagsInput.value, plat.maxTags); tagsInput.value = c.hashtags; grow(); update(); });
+    textarea.disabled = tagsInput.disabled = busy;
+
+    let status = null;
+    if (c.status) {
+      const s = c.status;
+      const txLink = s.hash && !PREVIEW ? h('a', { href: `${NET.explorer}/tx/${s.hash}`, target: '_blank', rel: 'noopener' }, 'view tx ↗') : null;
+      if (s.step === 'confirm') status = h('div', { class: 'c-status' }, 'Confirm in MetaMask…');
+      else if (s.step === 'mining') status = h('div', { class: 'c-status' }, 'Serving on BOT Chain… ', txLink);
+      else if (s.step === 'error') status = h('div', { class: 'c-status err' }, s.error, ' ', txLink);
+    }
+    if (c.status?.step === 'error') serveBtn.textContent = 'Try again';
+    if (busy) serveBtn.textContent = c.status.step === 'confirm' ? 'Waiting…' : 'Serving…';
+
+    const front = h('article', { class: 'card face' },
+      h('div', { class: 'c-head' },
+        h('span', { class: 'c-emblem' }, emblem(tone.key), tone.label),
+        h('span', { class: 'c-plat' }, plat.label)),
+      textarea, tagsInput,
+      h('div', { class: 'c-foot' }, h('span', { class: 'avatars' }, deck.business ? h('span', {}, deck.business) : h('span', {}, plat.label)), counter),
+      note,
+      h('div', { class: 'c-actions' },
+        h('button', { class: 'pill dark-ghost small', onclick: () => copy(fullText(c.text, normTags(c.hashtags, plat.maxTags)), 'Caption copied') }, 'Copy'),
+        serveBtn),
+      status,
+    );
+
+    let back = h('div', { class: 'back' });
+    if (c.status?.step === 'served') {
+      const s = c.status;
+      const url = shareUrl(s.id);
+      const tweet = `https://x.com/intent/tweet?text=${encodeURIComponent(`I just served a caption at Caption Café ☕ “${c.text.trim().slice(0, 120)}${c.text.trim().length > 120 ? '…' : ''}”`)}&url=${encodeURIComponent(url)}`;
+      back = h('article', { class: 'card back back-card' },
+        h('div', {},
+          h('div', { class: 'stamp' }, 'Served on BOT Chain'),
+          h('p', { class: 'giant served-no' }, `#${s.id}`),
+          h('p', { style: 'margin:6px 0 0;font-size:13px;color:#333' }, 'Stamped on-chain, forever. It’s on Today’s Specials now.')),
+        h('div', { class: 'links' },
+          PREVIEW ? h('span', { style: 'font-size:12px;color:#5B3A6B' }, 'Preview mode — no real transaction')
+            : h('a', { class: 'tx', href: `${NET.explorer}/tx/${s.hash}`, target: '_blank', rel: 'noopener' }, `Tx ${short(s.hash)} ↗`),
+          h('button', { class: 'pill dark small', onclick: () => copy(url, 'Share link copied') }, 'Copy share link'),
+          h('a', { class: 'pill dark-ghost small', href: tweet, target: '_blank', rel: 'noopener' }, 'Share on X'),
+          h('button', { class: 'pill dark-ghost small', onclick: () => { state.tab = 'specials'; state.filter = 'all'; renderBoard(); $('specials-sheet').scrollIntoView({ behavior: 'smooth' }); } }, 'See it on the board')));
+    }
+
+    const served = c.status?.step === 'served';
+    const flip = h('div', { class: `flip${served && c.flipShown ? ' flipped' : ''}` }, front, back);
+    // Render face-up first, then flip on the next frame so the card visibly turns over.
+    if (served && !c.flipShown) requestAnimationFrame(() => requestAnimationFrame(() => { flip.classList.add('flipped'); c.flipShown = true; }));
+    const rot = [-6, -2, 2, 6][i];
+    const slot = h('div', { class: 'slot', style: `--r:${rot}deg; --lift:${[18, 0, 0, 18][i]}px; --deal:${i * 0.08}s` }, flip);
+    requestAnimationFrame(() => { grow(); update(); });
+    return slot;
+  }
+
+  function renderDeck() {
+    const body = $('deck-body');
+    if (state.brewing) {
+      const blank = () => h('div', { class: 'card' }, h('div', { class: 'c-head' }, h('span', { class: 'c-emblem' }, emblem('cosy'), '···')),
+        h('div', { class: 'skeleton', style: 'width:90%' }), h('div', { class: 'skeleton', style: 'width:75%' }), h('div', { class: 'skeleton', style: 'width:82%' }), h('div', { class: 'skeleton', style: 'width:40%;margin-top:14px' }));
+      body.replaceChildren(h('div', { class: 'shuffle', 'aria-hidden': 'true' }, blank(), blank(), blank(), blank()),
+        h('p', { class: 'brewing-label', role: 'status' }, 'Brewing your captions…'));
+      return;
+    }
+    if (!state.deck) {
+      body.replaceChildren(h('div', { class: 'deck-empty' },
+        h('div', { class: 'tiles' }, ...[0, 3, 1].map((t, i) => { const el = tile(t, 'sm'); el.style.setProperty('--r', `${[-8, 4, 10][i]}deg`); return el; })),
+        h('p', {}, 'Your four caption cards will be dealt here.'),
+        h('a', { class: 'pill ghost', href: '#order-sheet' }, 'Fill the order first ↑')));
+      return;
+    }
+    const d = state.deck;
+    body.replaceChildren(
+      h('div', { class: 'deck-meta' },
+        h('span', {}, `${platOf(d.platform).label} · ${d.product} · for ${d.audience}`),
+        d.source === 'house' ? h('span', { class: 'house', title: CONFIG.aiUrl ? 'The AI was busy, so the café served its house blend.' : 'No AI Worker configured yet, so the café serves its house blend.' }, 'House blend') : null,
+        h('button', { class: 'pill ghost small', disabled: state.brewing, onclick: () => brew({ business: d.business, product: d.product, audience: d.audience, tones: d.tones, platform: d.platform }) }, '↻ Re-brew')),
+      h('div', { class: `deck${d.dealt ? ' dealt' : ''}` }, ...d.cards.map((c, i) => deckCard(d, c, i))),
+      h('p', { class: 'lede', style: 'margin-top:10px' }, 'Tap a caption to tweak it. Copy works without a wallet — nothing is posted to social media for you.'));
+    setTimeout(() => { if (state.deck === d) { d.dealt = true; document.querySelector('.deck')?.classList.add('dealt'); } }, 1200);
+  }
+
+  // Re-render one card in place, so status updates don't re-deal the whole deck.
+  function renderCard(i) {
+    const slot = document.querySelectorAll('.deck .slot')[i];
+    if (!slot || !state.deck) return renderDeck();
+    slot.replaceWith(deckCard(state.deck, state.deck.cards[i], i));
+  }
+
+  async function serve(i) {
+    const d = state.deck;
+    const c = d.cards[i];
+    const m = measure(d, c);
+    if (!m.ok) return;
+    if (!(await ensureReady())) return;
+    const payload = { business: d.business, text: m.text, hashtags: m.tags, platform: PLATFORMS.findIndex((p) => p.key === d.platform), tone: TONES.findIndex((t) => t.key === c.tone) };
+    c.text = m.text; c.hashtags = m.tags;
+    const setStep = (step, hash) => { c.status = { step, hash: hash || c.status?.hash }; renderCard(i); };
+    try {
+      const { id, hash } = await store.serve(payload, setStep);
+      c.status = { step: 'served', id, hash };
+      state.fresh = id;
+      renderCard(i);
+      refreshBoard();
+    } catch (e) {
+      console.error(e);
+      c.status = { step: 'error', error: explain(e), hash: c.status?.hash };
+      renderCard(i);
+    }
+  }
+
+  // ============================================================
+  // Chapter 03 — Today's Specials / My menu
+  // ============================================================
+  async function loadSipped() {
+    if (!state.account || !state.boardLoaded) return;
+    try { state.sipped = await store.sippedBy(state.account, state.board.length); } catch (e) { console.error(e); }
+  }
+
+  async function refreshBoard() {
+    try {
+      state.board = await store.all();
+      state.boardLoaded = true;
+      state.boardError = null;
+      await loadSipped();
+    } catch (e) {
+      console.error(e);
+      state.boardError = `Could not reach ${NET.name}. Check your connection and try again.`;
+    }
+    renderBoard();
+  }
+
+  async function sip(id) {
+    if (state.sipping[id] || state.sipped.has(id)) return;
+    if (!(await ensureReady())) return;
+    if (state.sipped.has(id)) return renderBoard();
+    try {
+      await store.sip(id, (step) => { state.sipping[id] = step; renderBoard(); });
+      state.sipped.add(id);
+      const c = state.board.find((x) => x.id === id);
+      if (c) c.sips += 1;
+      toast('☕ Sipped! Thanks for the love.');
+    } catch (e) {
+      console.error(e);
+      if ((e?.revert?.name || parseRevert(e)) === 'AlreadySipped') state.sipped.add(id);
+      toast(explain(e));
+    } finally {
+      delete state.sipping[id];
+      renderBoard();
+    }
+  }
+
+  const FILTERS = [['all', 'All'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['x', 'X'], ['newest', 'Newest']];
+
+  function renderBoard() {
+    $('board-tabs').replaceChildren(...[['specials', "Today's Specials"], ['mine', 'My menu']].map(([k, label]) => h('button', {
+      role: 'tab', 'aria-selected': String(state.tab === k), onclick: () => { state.tab = k; renderBoard(); },
+    }, label)));
+    $('board-filters').replaceChildren(...FILTERS.map(([k, label]) => h('button', {
+      class: 'chip', 'aria-pressed': String(state.filter === k), onclick: () => { state.filter = k; renderBoard(); },
+    }, label)));
+
+    const body = $('board-body');
+    const msg = (title, text, ...actions) => body.replaceChildren(h('div', { class: 'board-msg' }, h('p', { class: 'giant' }, title), text ? h('p', {}, text) : null, actions.length ? h('div', { class: 'modal-row', style: 'margin-top:20px' }, ...actions) : null));
+
+    if (state.boardError) return msg('Kitchen offline', state.boardError, h('button', { class: 'pill ghost', onclick: refreshBoard }, 'Try again'));
+    if (!state.boardLoaded) return msg('Warming up…', `Reading today's specials from ${NET.name}.`);
+
+    let list = state.board;
+    if (state.tab === 'mine') {
+      if (!state.account) return msg('Your menu', 'Connect your wallet to see the captions you served.', h('button', { class: 'pill lilac', onclick: connect }, window.ethereum || PREVIEW ? 'Connect wallet' : 'Install MetaMask'));
+      list = list.filter((c) => c.chef.toLowerCase() === state.account.toLowerCase());
+      if (!list.length) return msg('Nothing served yet', 'Brew a deck and serve your favourite — it will show up here.', h('a', { class: 'pill lilac', href: '#order-sheet' }, 'Take the order'));
+    }
+    const plat = PLATFORMS.findIndex((p) => p.key === state.filter);
+    if (plat >= 0) list = list.filter((c) => c.platform === plat);
+    list = [...list].sort(state.filter === 'newest' ? (a, b) => b.servedAt - a.servedAt || b.id - a.id : (a, b) => b.sips - a.sips || b.servedAt - a.servedAt || b.id - a.id);
+
+    if (!list.length) {
+      return state.board.length
+        ? msg('Nothing here yet', `No ${FILTERS.find((f) => f[0] === state.filter)[1]} captions on the menu yet.`, h('button', { class: 'chip', onclick: () => { state.filter = 'all'; renderBoard(); } }, 'Show all'))
+        : msg('No specials yet', 'Serve the first one.', h('a', { class: 'pill lilac', href: '#order-sheet' }, 'Take the order'));
+    }
+    const items = [];
+    list.forEach((c, i) => {
+      items.push(captionCard(c, { board: true }));
+      if (i % 5 === 2) {
+        const el = tile(c.id, i % 2 ? '' : 'lg');
+        el.style.setProperty('--r', `${((rand(c.id + 3) - .5) * 20).toFixed(1)}deg`);
+        items.push(h('div', { class: 'tile-wrap', 'aria-hidden': 'true' }, el));
+      }
+    });
+    body.replaceChildren(h('div', { class: 'board' }, ...items));
+  }
+
+  // ============================================================
+  // ?caption=ID — one card, read-only, no wallet needed
+  // ============================================================
+  let modalEl = null;
+  function removeModal() {
+    if (!modalEl) return;
+    modalEl.remove(); modalEl = null;
+    document.body.classList.remove('locked');
+  }
+  function openModal(content) {
+    removeModal();
+    modalEl = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', onclick: (e) => { if (e.target === modalEl) closeModal(); } },
+      h('button', { class: 'pill ghost small modal-close', onclick: closeModal, 'aria-label': 'Close' }, 'Close ✕'), content);
+    document.body.append(modalEl);
+    document.body.classList.add('locked');
+    modalEl.querySelector('button, a')?.focus();
+  }
+  function closeModal() {
+    if (!modalEl) return;
+    removeModal();
+    if (params.has('caption')) { params.delete('caption'); history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash); }
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  async function openCaption(id) {
+    if (!/^\d{1,9}$/.test(String(id))) return notOnMenu();
+    openModal(h('div', { class: 'modal-inner' }, h('p', {}, 'Fetching caption…')));
+    let c = state.board.find((x) => x.id === Number(id));
+    if (!c) {
+      try { c = await store.get(Number(id)); }
+      catch (e) { console.error(e); return openModal(h('div', { class: 'modal-inner' }, h('h2', { class: 'giant' }, 'Kitchen offline'), h('p', {}, `Could not reach ${NET.name}. Try again in a moment.`))); }
+    }
+    if (!c) return notOnMenu();
+    const url = shareUrl(c.id);
+    const tweet = `https://x.com/intent/tweet?text=${encodeURIComponent('A caption served on BOT Chain at Caption Café ☕')}&url=${encodeURIComponent(url)}`;
+    openModal(h('div', { class: 'modal-inner' },
+      h('p', { style: 'font-size:12px;letter-spacing:.14em;text-transform:uppercase' }, `Caption #${c.id} · served ${ago(c.servedAt)}`),
+      captionCard(c),
+      h('p', { style: 'font-size:12px' }, 'Served by ', h('span', { title: c.chef }, short(c.chef)), PREVIEW ? ' · preview' : ['  · ', h('a', { href: `${NET.explorer}/address/${c.chef}`, target: '_blank', rel: 'noopener' }, 'explorer ↗')]),
+      h('div', { class: 'modal-row' },
+        h('button', { class: 'pill', onclick: () => copy(fullText(c.text, c.hashtags), 'Caption copied') }, 'Copy caption'),
+        h('button', { class: 'pill ghost', onclick: () => copy(url, 'Share link copied') }, 'Copy share link'),
+        h('a', { class: 'pill ghost', href: tweet, target: '_blank', rel: 'noopener' }, 'Share on X')),
+      h('a', { class: 'pill lilac', href: '#specials-sheet', onclick: closeModal }, "See Today's Specials")));
+  }
+  function notOnMenu() {
+    openModal(h('div', { class: 'modal-inner' },
+      h('h2', { class: 'giant' }, 'Caption not on the menu'),
+      h('p', {}, 'That caption number has not been served yet. Check the link, or browse what is.'),
+      h('a', { class: 'pill lilac', href: '#specials-sheet', onclick: closeModal }, "See Today's Specials")));
+  }
+
+  // ============================================================
+  // Hero — floating cards and pattern tiles with gentle parallax
+  // ============================================================
+  function renderHero() {
+    const samples = [
+      { text: 'Iced oat latte, but make it a whole mood.', hashtags: '#icedlatte #oatmilk', tone: 0, platform: 0, sips: 14, chef: '0x1a2b', business: 'Bean There' },
+      { text: 'Croissant o’clock. You know the drill. 🥐', hashtags: '#bakery', tone: 4, platform: 2, sips: 11, chef: '0x77aa', business: 'Crumb Club' },
+      { text: 'Quietly exceptional. Hand-tied peonies.', hashtags: '#florist #peonies', tone: 3, platform: 0, sips: 9, chef: '0x5eed', business: 'Velvet Bloom' },
+      { text: 'Open till 2am. Your group chat knows.', hashtags: '#latenight', tone: 2, platform: 1, sips: 5, chef: '0x0bad', business: 'Night Owl' },
+      { text: 'Slow down. Chai and a window seat.', hashtags: '#cosycafe', tone: 1, platform: 0, sips: 3, chef: '0x3e3e', business: 'Moss & Mug' },
+    ];
+    // [x%, y%, rotate, depth, kind, extra class]
+    const spots = [
+      ['8%', '46%', '-9deg', 1.2, 'card0', ''], ['36%', '56%', '4deg', .7, 'card1', ''], ['63%', '44%', '-3deg', 1.4, 'card2', ''],
+      ['82%', '62%', '8deg', .9, 'card3', 'hide-sm'], ['20%', '72%', '6deg', .5, 'card4', 'dim hide-sm'],
+      ['2%', '30%', '10deg', .6, 'tile0', ''], ['28%', '38%', '-12deg', 1.6, 'tile1', 'hide-sm'], ['52%', '74%', '7deg', 1.1, 'tile2', ''],
+      ['74%', '30%', '-6deg', .8, 'tile3', ''], ['90%', '40%', '14deg', 1.3, 'tile4', ''], ['46%', '36%', '-4deg', .4, 'tile5', 'dim hide-sm'],
+      ['68%', '82%', '-10deg', .6, 'tile0', 'hide-sm'], ['4%', '80%', '5deg', 1, 'tile3', ''],
+    ];
+    const field = $('float-field');
+    field.replaceChildren(...spots.map(([x, y, r, d, kind, extra], i) => {
+      const inner = kind.startsWith('card') ? captionCard({ ...samples[Number(kind.slice(4))], id: null }, { mini: true }) : tile(Number(kind.slice(4)), i % 3 === 0 ? 'lg' : i % 3 === 1 ? '' : 'sm');
+      inner.style.setProperty('--delay', `${(-rand(i + 2) * 7).toFixed(2)}s`);
+      return h('div', { class: `float-item ${extra}`, style: `--x:${x};--y:${y};--r:${r};--d:${d}` }, inner);
+    }));
+    const hero = $('hero');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    let raf = 0;
+    const set = (k, v) => hero.style.setProperty(k, v);
+    window.addEventListener('pointermove', (e) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const mx = ((e.clientX / innerWidth) - .5).toFixed(3), my = ((e.clientY / innerHeight) - .5).toFixed(3);
+        set('--mx', mx); set('--my', my);
+        $('finale').style.setProperty('--mx', mx); $('finale').style.setProperty('--my', my);
+      });
+    }, { passive: true });
+    window.addEventListener('scroll', () => { if (scrollY < innerHeight * 1.2) set('--sy', String(Math.round(scrollY))); }, { passive: true });
+  }
+
+  // ============================================================
+  // Chapter 04 — footer
+  // ============================================================
+  function renderFooter() {
+    const addr = MAINNET.contract;
+    const explorerUrl = addr ? `${MAINNET.explorer}/address/${addr}` : MAINNET.explorer;
+    const bigText = addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}`.toUpperCase() : 'COMING SOON';
+    // Decoration: pattern tiles and mini caption cards drifting around the closing scene.
+    // Kept to the side gutters so nothing covers the text; the mini cards only appear on wide screens.
+    const deco = [
+      ['2%', '5%', '-10deg', 1.2, 'tile1', 'lg', ''], ['91%', '3%', '9deg', 1.1, 'tile0', '', ''],
+      ['-2%', '42%', '12deg', .9, 'tile4', '', ''], ['93%', '38%', '-12deg', 1.3, 'tile2', 'lg', ''],
+      ['5%', '76%', '-6deg', .6, 'tile5', 'sm', 'hide-sm'], ['90%', '72%', '10deg', .6, 'tile3', 'sm', 'hide-sm'],
+      ['13%', '22%', '6deg', .5, 'tile3', 'sm', 'hide-sm'], ['84%', '20%', '-4deg', .4, 'tile5', 'sm', 'hide-sm'],
+      ['5%', '24%', '7deg', .7, 'card0', '', 'hide-md'], ['80%', '50%', '-7deg', .8, 'card1', '', 'hide-md'],
+    ];
+    const minis = [
+      { text: 'Last call for cold brew. ☕', hashtags: '#lastorder', tone: 1, platform: 0, sips: 21, chef: '0x9a1f', business: 'Moss & Mug' },
+      { text: 'Stamped on-chain. Posted with pride.', hashtags: '#botchain', tone: 3, platform: 2, sips: 17, chef: '0x4c2e', business: 'Velvet Bloom' },
+    ];
+    const field = h('div', { class: 'float-field', 'aria-hidden': 'true' }, ...deco.map(([x, y, r, d, kind, size, extra], i) => {
+      const inner = kind.startsWith('card') ? captionCard({ ...minis[Number(kind.slice(4))], id: null }, { mini: true }) : tile(Number(kind.slice(4)), size);
+      inner.style.setProperty('--delay', `${(-rand(i + 11) * 7).toFixed(2)}s`);
+      return h('div', { class: `float-item ${extra}`, style: `--x:${x};--y:${y};--r:${r};--d:${d}` }, inner);
+    }));
+    const chip = (tone, label) => h('span', {}, emblem(tone), label);
+    $('finale').replaceChildren(
+      h('div', { class: 'finale-stars', 'aria-hidden': 'true' }),
+      field,
+      h('div', { class: 'corner tl' }, 'Last order'),
+      h('div', { class: 'corner tr' }, 'Chapter 04'),
+      h('a', { class: 'app-tile', href: 'https://botchain.ai', target: '_blank', rel: 'noopener', 'aria-label': 'BOT Chain website' },
+        h('img', { src: 'images/bot-chain-black.png', alt: 'BOT Chain', width: 84, height: 84 })),
+      h('p', { class: 'bold-line' }, 'Brewed on BOT Chain.'),
+      h('p', { class: 'grey' }, 'Every served caption is stamped on-chain, forever.'),
+      h('div', { class: 'finale-ribbon', 'aria-hidden': 'true' },
+        chip('cosy', 'Brewed by AI'), chip('bold', 'Served on-chain'), chip('playful', 'Sipped by the community'), chip('luxe', 'Yours forever')),
+      h('div', { class: 'address-field' },
+        h('div', { class: 'label' }, addr ? 'Contract · BOT Chain mainnet' : 'Contract · deploying to BOT Chain mainnet soon'),
+        h('a', { class: 'address-big', href: explorerUrl, target: '_blank', rel: 'noopener', title: addr || 'BOT Chain explorer' }, bigText),
+        h('a', { class: 'explorer-link', href: explorerUrl, target: '_blank', rel: 'noopener' }, 'View on explorer ↗')),
+      h('div', { class: 'finale-bottom' },
+        h('div', {}, h('p', {}, 'Made with Caption Café'), h('p', {}, 'Copy-paste responsibly')),
+        h('div', { class: 'mid' },
+          h('span', { class: 'brand' }, h('span', { class: 'mark', html: document.querySelector('.brand .mark').innerHTML })),
+          h('p', {}, 'Real posts start offline.')),
+        h('div', { class: 'right' }, h('p', {}, 'BOT Chain · chain ID 677'), h('p', {}, netKey === 'testnet' ? `Viewing testnet (${NET.chainId})` : 'No tokens · no payments · no admin'))),
+    );
+  }
+
+  // ============================================================
+  // Intro + boot
+  // ============================================================
+  function intro() {
+    const el = $('intro');
+    const bar = el.querySelector('.bar i');
+    const pct = $('intro-pct');
+    const total = matchMedia('(prefers-reduced-motion: reduce)').matches ? 200 : 1500;
+    const start = performance.now();
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      pct.textContent = '100%';
+      bar.style.transform = 'scaleX(1)';
+      setTimeout(() => { el.classList.add('done'); if (!modalEl) document.body.classList.remove('locked'); }, 250);
+    };
+    const step = (t) => {
+      if (finished) return;
+      const p = Math.min(1, (t - start) / total);
+      const eased = 1 - Math.pow(1 - p, 3);
+      pct.textContent = `${Math.round(eased * 100)}%`;
+      bar.style.transform = `scaleX(${eased})`;
+      if (p < 1) requestAnimationFrame(step);
+      else finish();
+    };
+    requestAnimationFrame(step);
+    setTimeout(finish, total + 300); // rAF pauses in background tabs; never leave the page locked behind the intro
+  }
+
+  function decorateOrder() {
+    $('order-tag-icon').append(emblem('cosy'));
+    $('order-deco-a').append(tile(3, 'sm'));
+    $('order-deco-b').append(tile(0));
+  }
+
+  // Pattern tiles drifting in the corners of each full-screen chapter stage.
+  function decorateStages() {
+    const spots = [
+      [['6%', '16%', '-12deg', 'lg', 1], ['84%', '12%', '10deg', '', 4], ['10%', '70%', '8deg', 'sm', 3], ['80%', '68%', '-8deg', '', 0]],
+      [['8%', '14%', '9deg', '', 3], ['82%', '18%', '-10deg', 'lg', 1], ['12%', '72%', '-6deg', 'lg', 5], ['84%', '74%', '12deg', 'sm', 2]],
+      [['5%', '20%', '7deg', '', 2], ['86%', '14%', '-9deg', 'sm', 4], ['9%', '74%', '-10deg', 'sm', 0], ['78%', '70%', '8deg', 'lg', 3]],
+    ];
+    document.querySelectorAll('.chapter .stage-tiles').forEach((box, i) => {
+      box.replaceChildren(...spots[i % spots.length].map(([x, y, r, size, kind], j) => {
+        const t = tile(kind, size);
+        t.style.cssText = `left:${x};top:${y};transform:rotate(${r});animation:bob 7s ease-in-out infinite;animation-delay:${-(i * 2 + j) * 1.3}s`;
+        if (j >= 2) t.classList.add('hide-sm-tile');
+        return t;
+      }));
+    });
+  }
+
+  // Scroll-driven peel: each .peel gets --p from 0 (bottom edge at the bottom of the screen) to 1 (bottom edge at the top).
+  function initPeel() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const peelers = [...document.querySelectorAll('.peel')];
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const vh = innerHeight;
+      for (const el of peelers) {
+        const bottom = el.getBoundingClientRect().bottom;
+        const p = Math.min(1, Math.max(0, (vh - bottom) / vh));
+        el.style.setProperty('--p', p.toFixed(4));
+        el.classList.toggle('peeling', p > 0 && p < 1);
+      }
+    };
+    const queue = () => { if (!raf) raf = requestAnimationFrame(update); };
+    addEventListener('scroll', queue, { passive: true });
+    addEventListener('resize', queue);
+    update();
+  }
+
+  function boot() {
+    intro();
+    decorateOrder();
+    decorateStages();
+    initPeel();
+    renderChips();
+    validateOrder();
+    renderHero();
+    renderDeck();
+    renderBoard();
+    renderFooter();
+    renderWallet();
+    initWallet();
+    refreshBoard();
+    if (params.has('caption')) setTimeout(() => openCaption(params.get('caption')), 400);
+  }
+
+  if (!window.ethers) {
+    document.body.classList.remove('locked');
+    $('intro').classList.add('done');
+    $('deck-body').textContent = 'Could not load ethers.js. Check your connection and reload.';
+    return;
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
