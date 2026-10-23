@@ -5,7 +5,7 @@ compatibility_date = "2026-09-01"
 [vars]
 # Comma-separated list of site origins allowed to call POST /captions (no trailing slash).
 # Replace with your live domain(s); keep localhost only while developing.
-ALLOWED_ORIGINS = "http://localhost:4607"
+ALLOWED_ORIGINS = "https://captioncafe.my.id,https://www.captioncafe.my.id,https://lallinanoi99-dev.github.io,http://localhost:4607"
 # Claude model that brews the captions. claude-haiku-5-5 is the cheapest option.
 MODEL = "claude-opus-5-5"
 

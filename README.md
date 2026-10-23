@@ -8,7 +8,7 @@ Tell the café what you're selling. AI brews a deck of four ready-to-post social
 
 | | |
 |---|---|
-| Live site | _not published yet_ |
+| Live site | https://captioncafe.my.id (GitHub Pages: https://lallinanoi99-dev.github.io/Caption-Cafe/) |
 | AI Worker | _not deployed yet_ |
 | Contract (BOT Chain mainnet, chain ID 677) | [`0x9c95425b4EB4a12A3952F5A855382Cdc162cd7e1`](https://scan.botchain.ai/address/0x9c95425b4EB4a12A3952F5A855382Cdc162cd7e1) |
 | Contract (testnet, chain ID 968) | _not deployed yet_ |
